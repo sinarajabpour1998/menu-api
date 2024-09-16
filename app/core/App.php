@@ -8,21 +8,18 @@ class App
 
 	private function splitURL()
 	{
-        if (!isset($_GET['url'])) {
-            $base_url = $_SERVER['REQUEST_URI'];
-        } else {
-            $base_url = $_GET['url'];
-        }
-		$URL = $base_url ?? 'home';
+		$URL = $_SERVER['REQUEST_URI'] ?? 'home';
 		$URL = explode("/", trim($URL,"/"));
 		return $URL;	
 	}
 
 	public function loadController()
 	{
+        $dsn = 'mysql:host=localhost;dbname='.DBNAME.';charset=utf8';
+        $db = new Database($dsn, DBUSER, DBPASS);
+
 		$URL = $this->splitURL();
 
-		/** select controller **/
 		$filename = "./app/controllers/".ucfirst($URL[0]).".php";
 		if(file_exists($filename))
 		{
@@ -36,19 +33,19 @@ class App
 			$this->controller = "_404";
 		}
 
-		$controller = new $this->controller;
+        $server_uri = $_SERVER['REQUEST_URI'];
 
-		/** select method **/
-		if(!empty($URL[1]))
-		{
-			if(method_exists($controller, $URL[1]))
-			{
-				$this->method = $URL[1];
-				unset($URL[1]);
-			}	
-		}
+        $menuModel = new Menu($db);
+        $menuController = new MenuController($menuModel);
 
-		call_user_func_array([$controller,$this->method], $URL);
+        // routes
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $server_uri === '/menu/create') {
+            echo $menuController->create();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && $server_uri === '/menu/get') {
+            echo $menuController->get();
+        }
 
 	}	
 

@@ -1,53 +1,31 @@
-<?php 
+<?php
 
-Trait Database
-{
+class Database {
+    private $pdo;
 
-	private function connect()
-	{
-		$string = "mysql:hostname=".DBHOST.";dbname=".DBNAME;
-		$con = new PDO($string,DBUSER,DBPASS);
-		return $con;
-	}
+    public function __construct($dsn, $username, $password) {
+        try {
+            $this->pdo = new PDO($dsn, $username, $password);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+            die('Connection failed: ' . $e->getMessage());
+        }
+    }
 
-	public function query($query, $data = [])
-	{
+    public function execute($sql, $params = []) {
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
 
-		$con = $this->connect();
-		$stm = $con->prepare($query);
+    public function fetchAll($sql, $params = []) {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-		$check = $stm->execute($data);
-		if($check)
-		{
-			$result = $stm->fetchAll(PDO::FETCH_OBJ);
-			if(is_array($result) && count($result))
-			{
-				return $result;
-			}
-		}
-
-		return false;
-	}
-
-	public function get_row($query, $data = [])
-	{
-
-		$con = $this->connect();
-		$stm = $con->prepare($query);
-
-		$check = $stm->execute($data);
-		if($check)
-		{
-			$result = $stm->fetchAll(PDO::FETCH_OBJ);
-			if(is_array($result) && count($result))
-			{
-				return $result[0];
-			}
-		}
-
-		return false;
-	}
-	
+    public function fetch($sql, $params = []) {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
-
-
